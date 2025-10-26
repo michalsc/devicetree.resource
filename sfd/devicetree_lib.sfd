@@ -1,0 +1,20 @@
+==id $Id: devicetree_lib.sfd 0.1.0 $
+* "devicetree.resource"
+==base _DeviceTreeBase
+==basetype APTR
+==libname devicetree
+==include <exec/types.h>
+==bias 6
+==public
+APTR DT_OpenKey(CONST_STRPTR name) (A0)
+void DT_CloseKey(APTR key) (A0)
+APTR DT_GetChild(APTR key, APTR prev) (A0,A1)
+APTR DT_FindProperty(APTR key, CONST_STRPTR property) (A0,A1)
+APTR DT_GetProperty(APTR key, APTR prev) (A0,A1)
+ULONG DT_GetPropLen(APTR property) (A0)
+CONST_STRPTR DT_GetPropName(APTR property) (A0)
+CONST_APTR DT_GetPropValue(APTR property) (A0)
+APTR DT_GetParent(APTR key) (A0)
+CONST_STRPTR DT_GetKeyName(APTR key) (A0)
+APTR DT_FindPropertyRecursive(APTR key, CONST_STRPTR property) (A0,A1)
+==end
