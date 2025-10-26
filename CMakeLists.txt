@@ -31,3 +31,7 @@ target_link_options(devicetree.resource PRIVATE -ffreestanding -nostdlib -nostar
 target_link_libraries(devicetree.resource devicetree)
 
 set_target_properties(devicetree.resource PROPERTIES LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/ldscript.lds)
+
+# no install for devicetree.resource itself, it goes to ROM
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/sfd DESTINATION Developer)
+install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/includes/ DESTINATION Developer/include)
