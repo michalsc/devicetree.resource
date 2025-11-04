@@ -21,6 +21,18 @@
 
 extern UBYTE rom_end;
 
+static void putch(REGARG(UBYTE data, "d0"), REGARG(APTR ignore, "a3"))
+{
+    (void)ignore;
+    *(UBYTE*)0xdeadbeef = data;
+}
+
+void kprintf(REGARG(const char * msg, "a0"), REGARG(void * args, "a1")) 
+{
+    struct ExecBase *SysBase = *(struct ExecBase **)4UL;
+    RawDoFmt(msg, args, (APTR)putch, NULL);
+}
+
 of_node_t * dt_build_node(of_node_t *parent, struct DeviceTreeBase *DeviceTreeBase)
 {
     struct ExecBase *SysBase = DeviceTreeBase->dt_ExecBase;
@@ -122,6 +134,7 @@ of_node_t * dt_parse(void *dt, struct DeviceTreeBase *DeviceTreeBase)
     }
     else
     {
+        bug("[DTREE] Wrong magic %08lx found\n", hdr->magic);
         hdr = NULL;
     }
 
@@ -175,6 +188,7 @@ APTR Init(REGARG(struct ExecBase *SysBase, "a6"))
         DeviceTreeBase->dt_ExecBase = SysBase;
         DeviceTreeBase->dt_StrNull = "(null)";
 
+        bug("[DTREE] Parsing device tree at %08lx\n", (ULONG)&rom_end);
         dt_parse(&rom_end, DeviceTreeBase);
 
         SumLibrary((struct Library*)DeviceTreeBase);

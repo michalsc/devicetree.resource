@@ -114,6 +114,11 @@ struct fdt_prop_entry {
 
 #define FDT_MAGIC       0xd00dfeed
 
+void kprintf(REGARG(const char * msg, "a0"), REGARG(void * args, "a1"));
+
+#define bug(string, ...) \
+    do { ULONG args[] = {0, __VA_ARGS__}; kprintf(string, &args[1]); } while(0)
+
 void Add_DT_Memory(struct ExecBase *SysBase, APTR DeviceTreeBase);
 void L_CloseKey(REGARG(of_node_t *node, "a0"), REGARG(struct DeviceTreeBase *DTBase, "a6"));
 APTR L_FindProperty(REGARG(of_node_t *node, "a0"), REGARG(CONST_STRPTR propname, "a1"), REGARG(struct DeviceTreeBase *DTBase, "a6"));

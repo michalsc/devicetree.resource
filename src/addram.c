@@ -6,11 +6,7 @@
 #include <stdint.h>
 
 #include <common/compiler.h>
-
-static void putch(REGARG(UBYTE data, "d0"), REGARG(APTR ignore, "a3"))
-{
-    *(UBYTE*)0xdeadbeef = data;
-}
+#include "devicetree.h"
 
 void Add_DT_Memory(struct ExecBase *SysBase, APTR DeviceTreeBase)
 {
@@ -98,28 +94,16 @@ void Add_DT_Memory(struct ExecBase *SysBase, APTR DeviceTreeBase)
                 ULONG t2 = TypeOfMem((APTR)0x08000000 + (size - (0x08000000 - base)) / 2);
 
                 if (t1 == 0 && t2 == 0) {
-                    ULONG args[] = {
-                        base,
-                        base + size - 1
-                    };
-                    RawDoFmt("[DTREE] Adding expansion memory %08lx..%08lx\n", args, (APTR)putch, NULL);
+                    bug("[DTREE] Adding expansion memory %08lx..%08lx\n", base, base + size - 1);
                     AddMemList(size, MEMF_FAST | MEMF_LOCAL | MEMF_KICK | MEMF_PUBLIC , 40, (APTR)(ULONG)base, "expansion memory");
                 }
                 else {
                     if (t1 == 0) {
-                        ULONG args[] = {
-                            base,
-                            0x07ffffff
-                        };
-                        RawDoFmt("[DTREE] Adding expansion memory %08lx..%08lx\n", args, (APTR)putch, NULL);
+                        bug("[DTREE] Adding expansion memory %08lx..%08lx\n", base, 0x07ffffff);
                         AddMemList(0x08000000 - base, MEMF_FAST | MEMF_LOCAL | MEMF_KICK | MEMF_PUBLIC , 40, (APTR)(ULONG)base, "expansion memory");
                     }
                     if (t2 == 0) {
-                        ULONG args[] = {
-                            0x08000000,
-                            base + size - 1
-                        };
-                        RawDoFmt("[DTREE] Adding expansion memory %08lx..%08lx\n", args, (APTR)putch, NULL);
+                        bug("[DTREE] Adding expansion memory %08lx..%08lx\n", 0x08000000, base + size - 1);
                         AddMemList(size - (0x08000000 - base), MEMF_FAST | MEMF_LOCAL | MEMF_KICK | MEMF_PUBLIC , 40, (APTR)0x08000000, "expansion memory");
                     }
                 }
@@ -131,11 +115,7 @@ void Add_DT_Memory(struct ExecBase *SysBase, APTR DeviceTreeBase)
 
                 // If TypeOfMem returned 0, then Exec has not added this block of memory yet. Do it now.
                 if (type == 0) {
-                    ULONG args[] = {
-                        base,
-                        base + size - 1
-                    };
-                    RawDoFmt("[DTREE] Adding expansion memory %08lx..%08lx\n", args, (APTR)putch, NULL);
+                    bug("[DTREE] Adding expansion memory %08lx..%08lx\n", base, base + size - 1);
                     AddMemList(size, MEMF_FAST | MEMF_LOCAL | MEMF_KICK | MEMF_PUBLIC , 40, (APTR)(ULONG)base, "expansion memory");
                 }
             }
@@ -150,7 +130,7 @@ void Add_DT_Memory(struct ExecBase *SysBase, APTR DeviceTreeBase)
                     base,
                     base + size - 1
                 };
-                RawDoFmt("[DTREE] Adding expansion memory %08lx..%08lx\n", args, (APTR)putch, NULL);
+                bug("[DTREE] Adding expansion memory %08lx..%08lx\n", base, base + size - 1);
                 AddMemList(size, MEMF_FAST | MEMF_LOCAL | MEMF_KICK | MEMF_PUBLIC , 40, (APTR)(ULONG)base, "expansion memory");
             }
         }
