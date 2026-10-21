@@ -48,8 +48,16 @@ extern const char deviceIdString[];
 #define BASE_NEG_SIZE (11 * 6)
 #define BASE_POS_SIZE ((sizeof(struct DeviceTreeBase)))
 #define DT_PRIORITY     127
+
+/* The version comes from project() in CMakeLists.txt, which defines DT_VERSION and DT_REVISION: the id string, lib_Version and lib_Revision cannot differ.
+   These are only for a build that does not go through CMake, keep them equal to project() */
+#ifndef DT_VERSION
 #define DT_VERSION      1
-#define DT_REVISION     4
+#endif
+
+#ifndef DT_REVISION
+#define DT_REVISION     6
+#endif
 
 
 static inline int dt_strcmp(const char *s1, const char *s2)

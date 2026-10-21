@@ -6,6 +6,7 @@
 # with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 function(sfdc SFD_FILE)
+    make_directory(${CMAKE_CURRENT_BINARY_DIR}/FD)
     make_directory(${CMAKE_CURRENT_BINARY_DIR}/include/clib)
     make_directory(${CMAKE_CURRENT_BINARY_DIR}/include/pragmas)
     make_directory(${CMAKE_CURRENT_BINARY_DIR}/include/proto)
@@ -46,7 +47,16 @@ function(sfdc SFD_FILE)
         VERBATIM
     )
 
+    add_custom_command(
+        OUTPUT FD/${LIB_NAME}.fd
+        COMMAND sfdc ${CMAKE_CURRENT_SOURCE_DIR}/${SFD_FILE} --mode=fd
+                     --output=FD/${LIB_NAME}.fd
+        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${SFD_FILE}
+        VERBATIM
+    )
+
     add_library(${LIB_NAME} INTERFACE
+        FD/${LIB_NAME}.fd
         include/clib/${LIB_NAME}_protos.h
         include/pragmas/${LIB_NAME}_pragmas.h
         include/proto/${LIB_NAME}.h

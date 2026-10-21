@@ -1,0 +1,420 @@
+TABLE OF CONTENTS
+
+devicetree.resource/--background--
+devicetree.resource/DT_CloseKey
+devicetree.resource/DT_FindProperty
+devicetree.resource/DT_FindPropertyRecursive
+devicetree.resource/DT_GetChild
+devicetree.resource/DT_GetKeyName
+devicetree.resource/DT_GetParent
+devicetree.resource/DT_GetProperty
+devicetree.resource/DT_GetPropLen
+devicetree.resource/DT_GetPropName
+devicetree.resource/DT_GetPropValue
+devicetree.resource/DT_OpenKey
+devicetree.resource/--background--         devicetree.resource/--background--
+
+   VERSION MARKS
+	The calls of this resource are described one by one below. This entry
+	says since when each exists, and how a change is told, as the autodocs
+	of the system do (see exec.library/AllocPooled or StackSwap).
+
+	A call that was added after the first version of the resource has its
+	version at the end of the line of its NAME, like "(V1.7)": the number is
+	the version of the resource in which it appeared. A change in what a call
+	does is written in its FUNCTION text, "As of V1.7 ..." and "Prior to V1.7
+	...". A call without a version in its NAME has been there since 1.0.
+
+   VERSIONS
+	The history comes from the repository of the project and from the one
+	that it was taken out of (Emu68-tools-old).
+
+	1.0   2021-10-02  First version: DT_OpenKey, DT_CloseKey, DT_GetChild,
+	                  DT_FindProperty, DT_GetProperty, DT_GetPropLen,
+	                  DT_GetPropName and DT_GetPropValue.
+	1.1   2021-10-03  The set-up checks the pointers that it gets back.
+	1.2   2021-10-05  DT_GetParent added. DT_OpenKey resolves a whole path
+	                  (see DT_OpenKey).
+	1.3   2021-12-15  Memory that exec has not added yet is added by the
+	                  resource at start-up. No call changed. This one is
+	                  only a revision: the project still said 1.2.
+	1.4   2022-11-04  DT_GetKeyName added.
+	1.5   2024-01-05  DT_FindPropertyRecursive added. The calls were cleaned
+	                  up, what they do is the same.
+	1.6   2025-11-04  The messages of the set-up go through bug(), the
+	                  debug port of Emu68. No call changed.
+
+	The ROM of the Emu68 1.1.0-beta.1 build of 17.10.2026 has 1.5, built
+	from the tree of commit 943f3b5.
+
+   VERSION AND REVISION
+	lib_Version and lib_Revision of the resource. They were written by hand
+	and did not always follow the id string: the project said 1.2 while the
+	revision was 3, and from 1.5 on the revision stayed at 4 while the id
+	string said 1.5. So a resource of 1.4 and one of 1.5 both have
+	lib_Revision 4, and the second has "devicetree 1.5" as its id string.
+	From 1.6 the id string, lib_Version and lib_Revision all come from the
+	version of the project (1.6 gives lib_Version 1 and lib_Revision 6).
+
+	A program that needs DT_FindPropertyRecursive (V1.5) cannot tell a 1.5
+	from a 1.4 by lib_Revision. It can by the size of the table of vectors:
+	lib_NegSize is at least 11 * 6 = 66 with that call, 60 without it.
+
+   SEE ALSO
+	exec.library/OpenResource()
+
+devicetree.resource/DT_CloseKey               devicetree.resource/DT_CloseKey
+
+   NAME
+	DT_CloseKey -- close a node obtained with DT_OpenKey
+
+   SYNOPSIS
+	DT_CloseKey( key )
+	             a0
+
+	VOID DT_CloseKey(APTR);
+
+   FUNCTION
+	Closes a key. This is a no-op today, since the tree is never
+	freed, but call it anyway for forward compatibility.
+
+   INPUTS
+	key             A node returned by DT_OpenKey().
+
+   SEE ALSO
+	devicetree.resource/DT_OpenKey()
+
+devicetree.resource/DT_FindProperty       devicetree.resource/DT_FindProperty
+
+   NAME
+	DT_FindProperty -- find a property of a node by name
+
+   SYNOPSIS
+	property = DT_FindProperty( key, property )
+	d0                          a0   a1
+
+	APTR DT_FindProperty(APTR, CONST_STRPTR);
+
+   FUNCTION
+	Searches the properties of a node for one with exactly the given
+	name. The parents are not searched.
+
+   INPUTS
+	key             The node to search. NULL returns NULL.
+	property        Name of the property, e.g. "compatible".
+
+   RESULTS
+	property        The property, or NULL if the node has none by that
+	                name.
+
+   EXAMPLES
+	#include <proto/exec.h>
+	#include <proto/devicetree.h>
+
+	APTR DeviceTreeBase = OpenResource("devicetree.resource");
+	if (DeviceTreeBase)
+	{
+	    APTR key = DT_OpenKey("/");
+	    APTR prop = DT_FindProperty(key, "model");
+
+	    if (prop)
+	        Printf("%s\n", DT_GetPropValue(prop));
+	}
+
+   SEE ALSO
+	devicetree.resource/DT_FindPropertyRecursive(),
+	devicetree.resource/DT_GetPropValue()
+
+devicetree.resource/DT_FindPropertyRecursive devicetree.resource/DT_FindPropertyRecursive
+
+   NAME
+	DT_FindPropertyRecursive -- find a property in a node or in its ancestors (V1.5)
+
+   SYNOPSIS
+	property = DT_FindPropertyRecursive( key, property )
+	d0                                   a0   a1
+
+	APTR DT_FindPropertyRecursive(APTR, CONST_STRPTR);
+
+   FUNCTION
+	Like DT_FindProperty(), but when the node has no such property
+	the search goes on with its parent, up to the root node. Useful
+	for inherited properties such as "#address-cells".
+
+   INPUTS
+	key             The node to start from.
+	property        Name of the property.
+
+   RESULTS
+	property        The nearest property found, or NULL if no node up to
+	                the root has it.
+
+   SEE ALSO
+	devicetree.resource/DT_FindProperty(),
+	devicetree.resource/DT_GetParent()
+
+devicetree.resource/DT_GetChild               devicetree.resource/DT_GetChild
+
+   NAME
+	DT_GetChild -- get the first child of a node, or the next sibling
+
+   SYNOPSIS
+	child = DT_GetChild( key, prev )
+	d0                   a0   a1
+
+	APTR DT_GetChild(APTR, APTR);
+
+   FUNCTION
+	Iterates over the children of a node. With prev set to NULL the
+	first child is returned; with prev set to a previous result the
+	next sibling is returned.
+
+   INPUTS
+	key             Parent node. NULL means the root node.
+	prev            The child returned by the previous call, or NULL to
+	                start.
+
+   RESULTS
+	child           The child, or NULL at the end of the list.
+
+   EXAMPLES
+	#include <proto/exec.h>
+	#include <proto/devicetree.h>
+
+	APTR DeviceTreeBase = OpenResource("devicetree.resource");
+	if (DeviceTreeBase)
+	{
+	    APTR key = DT_OpenKey("/soc");
+	    APTR child = NULL;
+
+	    while (child = DT_GetChild(key, child))
+	        Printf("%s\n", DT_GetKeyName(child));
+	}
+
+   SEE ALSO
+	devicetree.resource/DT_GetParent(),
+	devicetree.resource/DT_GetKeyName()
+
+devicetree.resource/DT_GetKeyName           devicetree.resource/DT_GetKeyName
+
+   NAME
+	DT_GetKeyName -- get the name of a node (V1.4)
+
+   SYNOPSIS
+	name = DT_GetKeyName( key )
+	d0                    a0
+
+	CONST_STRPTR DT_GetKeyName(APTR);
+
+   FUNCTION
+	Returns the name of a node, including its unit address if any
+	("serial@7e201000").
+
+   INPUTS
+	key             A node. NULL returns an empty string.
+
+   RESULTS
+	name            The name; never NULL. The root node has an empty name.
+
+   SEE ALSO
+	devicetree.resource/DT_OpenKey()
+
+devicetree.resource/DT_GetParent             devicetree.resource/DT_GetParent
+
+   NAME
+	DT_GetParent -- get the parent of a node (V1.2)
+
+   SYNOPSIS
+	parent = DT_GetParent( key )
+	d0                     a0
+
+	APTR DT_GetParent(APTR);
+
+   FUNCTION
+	Returns the node which contains the given node.
+
+   INPUTS
+	key             The node. NULL is taken as the root node.
+
+   RESULTS
+	parent          The parent, or NULL for the root node. Note that
+	                DT_GetParent(NULL) returns the root node itself.
+
+   SEE ALSO
+	devicetree.resource/DT_GetChild()
+
+devicetree.resource/DT_GetProperty         devicetree.resource/DT_GetProperty
+
+   NAME
+	DT_GetProperty -- get the first property of a node, or the next one
+
+   SYNOPSIS
+	property = DT_GetProperty( key, prev )
+	d0                         a0   a1
+
+	APTR DT_GetProperty(APTR, APTR);
+
+   FUNCTION
+	Iterates over the properties of a node. With prev set to NULL
+	the first property is returned; with prev set to a previous
+	result the next property is returned.
+
+   INPUTS
+	key             The node. NULL means the root node.
+	prev            The property returned by the previous call, or NULL to
+	                start.
+
+   RESULTS
+	property        The property, or NULL at the end of the list.
+
+   EXAMPLES
+	#include <proto/exec.h>
+	#include <proto/devicetree.h>
+
+	APTR DeviceTreeBase = OpenResource("devicetree.resource");
+	if (DeviceTreeBase)
+	{
+	    APTR key = DT_OpenKey("/");
+	    APTR prop = NULL;
+
+	    while (prop = DT_GetProperty(key, prop))
+	        Printf("%s (%ld bytes)\n", DT_GetPropName(prop), DT_GetPropLen(prop));
+	}
+
+   SEE ALSO
+	devicetree.resource/DT_FindProperty(),
+	devicetree.resource/DT_GetPropName()
+
+devicetree.resource/DT_GetPropLen           devicetree.resource/DT_GetPropLen
+
+   NAME
+	DT_GetPropLen -- get the size of a property value
+
+   SYNOPSIS
+	length = DT_GetPropLen( property )
+	d0                      a0
+
+	ULONG DT_GetPropLen(APTR);
+
+   FUNCTION
+	Returns the length in bytes of the value of a property. A
+	property without value (a flag) has a length of 0.
+
+   INPUTS
+	property        A property. NULL returns 0.
+
+   RESULTS
+	length          Size of the value in bytes.
+
+   SEE ALSO
+	devicetree.resource/DT_GetPropValue()
+
+devicetree.resource/DT_GetPropName         devicetree.resource/DT_GetPropName
+
+   NAME
+	DT_GetPropName -- get the name of a property
+
+   SYNOPSIS
+	name = DT_GetPropName( property )
+	d0                     a0
+
+	CONST_STRPTR DT_GetPropName(APTR);
+
+   FUNCTION
+	Returns the name of a property.
+
+   INPUTS
+	property        A property. NULL returns an empty string.
+
+   RESULTS
+	name            The name; never NULL.
+
+   SEE ALSO
+	devicetree.resource/DT_GetProperty()
+
+devicetree.resource/DT_GetPropValue       devicetree.resource/DT_GetPropValue
+
+   NAME
+	DT_GetPropValue -- get the value of a property
+
+   SYNOPSIS
+	value = DT_GetPropValue( property )
+	d0                       a0
+
+	CONST_APTR DT_GetPropValue(APTR);
+
+   FUNCTION
+	Returns a pointer to the raw value of a property, as stored in
+	the device tree blob.
+
+   INPUTS
+	property        A property. NULL returns NULL.
+
+   RESULTS
+	value           The value, or NULL if the property has none.
+
+   NOTE
+	Integers (cells) are big-endian 32-bit words, as in any
+	flattened device tree. Strings are NUL-terminated. The size is
+	given by DT_GetPropLen().
+
+   SEE ALSO
+	devicetree.resource/DT_GetPropLen()
+
+devicetree.resource/DT_OpenKey                 devicetree.resource/DT_OpenKey
+
+   NAME
+	DT_OpenKey -- open a node by its path
+
+   SYNOPSIS
+	key = DT_OpenKey( name )
+	d0                a0
+
+	APTR DT_OpenKey(CONST_STRPTR);
+
+   FUNCTION
+	Looks up a node of the device tree from its absolute path. The
+	path starts at the root node ("/"), node names are separated by
+	"/".
+
+	A name without unit address ("serial") also matches a node named
+	with one ("serial@7e201000"). A path component is limited to 63
+	characters.
+
+	As of V1.2 the whole path is resolved, one component after the other,
+	and NULL is returned as soon as one is not found. Prior to V1.2 every
+	component was looked for in the children of the root and the first one
+	found was returned: DT_OpenKey("/soc/gpio") gave the node "soc", not
+	"gpio".
+
+   INPUTS
+	name            Absolute path of the node, e.g. "/soc/gpio". "/" is
+	                the root.
+
+   RESULTS
+	key             The node, or NULL if the path is not absolute or a
+	                component was not found.
+
+   EXAMPLES
+	#include <proto/exec.h>
+	#include <proto/devicetree.h>
+
+	APTR DeviceTreeBase = OpenResource("devicetree.resource");
+	if (DeviceTreeBase)
+	{
+	    APTR key = DT_OpenKey("/soc");
+	    if (key)
+	    {
+	        /* ... */
+	        DT_CloseKey(key);
+	    }
+	}
+
+   NOTE
+	The device tree is read-only and always resident: a key stays
+	valid until reboot.
+
+   SEE ALSO
+	devicetree.resource/DT_CloseKey()
+
+
